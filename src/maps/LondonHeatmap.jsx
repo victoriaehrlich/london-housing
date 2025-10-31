@@ -1,36 +1,34 @@
-// src/charts/LondonHeatmap.jsx
+// src/maps/LondonHeatmap.jsx
 import React from "react";
 import * as d3 from "d3";
+import { useContainerSize } from "../hooks/useContainerSize";
 
-// top of file
+// base path
 const prefix = import.meta.env.BASE_URL;
-
-// then use:
 const GEO_URL  = `${prefix}london_boroughs.geojson`;
 const DATA_URL = `${prefix}ldn_ar_we_hp.csv`;
 
-
-// layout & style 
-const WIDTH = 820, HEIGHT = 760, MARGIN = 28;
+// layout & style
+const MARGIN = 28;
 const COLORS = {
-  missing: "#f3f4f6",     // light grey for missing
-  stroke:  "#d1d5db",     // inner boundaries
-  outline: "#73605b",     // outer crisp outline
+  missing: "#f3f4f6",
+  stroke:  "#d1d5db",
+  outline: "#73605b",
   tooltipBg: "rgba(17,24,39,0.92)",
 };
 
 // softer reds
-const TOP_RED        = "#9d6173ff"; // soft deep red for top 5
+const TOP_RED        = "#9d6173ff";
 const TOP_RED_STROKE = "#9e2f50";
 
 const fmtRatio = d3.format(".0f");
 const fmtMoney = (v) => (Number.isFinite(v) ? "£" + d3.format(",.0f")(v) : "—");
 
-// helpers 
+// helpers
 function toNumber(raw) {
   const s = String(raw ?? "").trim();
   if (!s) return NaN;
-  return Number(s.replace(/£/g, "").replace(/\s+/g, "").replace(/,/g, "")); // UK thousands commas
+  return Number(s.replace(/£/g, "").replace(/\s+/g, "").replace(/,/g, ""));
 }
 function clean(s) {
   return String(s || "").toLowerCase().normalize("NFKD")
@@ -45,8 +43,15 @@ function featureKey(f) {
 }
 
 export default function LondonHeatmap() {
+  const wrapRef = React.useRef(null);
   const svgRef = React.useRef(null);
   const tipRef = React.useRef(null);
+
+  // responsive size
+  const cw = useContainerSize(wrapRef, 820);
+  const WIDTH  = cw;
+  const HEIGHT = Math.max(380, Math.round(cw * 0.9));
+  const isSmall = WIDTH < 480;
 
   const [years, setYears] = React.useState([]);
   const [year, setYear] = React.useState(null);
@@ -107,19 +112,19 @@ export default function LondonHeatmap() {
     );
     const path = d3.geoPath(projection);
 
-    // adjust if ratios exceed this (kept fixed for comparability across years)
+    // fixed domain for comparability
     const FIXED_MIN = 5;
     const FIXED_MAX = 25;
 
-    // perceptually smooth grey→red and clamped
-    const grey = d3.rgb("#f3f4f6");  
-    const softRed = d3.rgb("#982339ff"); 
+    // grey → red gradient
+    const grey = d3.rgb("#f3f4f6");
+    const softRed = d3.rgb("#982339ff");
     const interpGreyRed = d3.interpolateLab(grey, softRed);
     const baseColor = d3.scaleSequential(interpGreyRed)
       .domain([FIXED_MIN, FIXED_MAX])
       .clamp(true);
 
-    // --- top 5 cutoff per year (still subtle) ---
+    // top 5 cutoff per year
     const sortedDesc = affVals.slice().sort((a, b) => b - a);
     const TOPN = Math.min(5, sortedDesc.length);
     const topCut = sortedDesc[TOPN - 1] ?? sortedDesc[sortedDesc.length - 1];
@@ -199,9 +204,11 @@ export default function LondonHeatmap() {
       .attr("stroke-width", 0.75)
       .attr("pointer-events", "none");
 
-    // legend (grey → red, fixed domain)
-    const legendWidth = 260, legendHeight = 10;
-    const legendX = WIDTH - legendWidth - 24, legendY = HEIGHT - 36;
+    // legend (responsive)
+    const legendWidth  = isSmall ? Math.max(120, Math.round(WIDTH * 0.55)) : 260;
+    const legendHeight = 10;
+    const legendX = WIDTH - legendWidth - (isSmall ? 12 : 24);
+    const legendY = HEIGHT - (isSmall ? 28 : 36);
 
     const defs = svg.append("defs");
     const grad = defs.append("linearGradient")
@@ -209,11 +216,10 @@ export default function LondonHeatmap() {
       .attr("x1", "0%").attr("y1", "0%")
       .attr("x2", "100%").attr("y2", "0%");
 
-    // build stops using the same interpolator so legend matches map
     d3.range(0, 1.0001, 0.1).forEach((t) => {
       grad.append("stop")
         .attr("offset", `${t * 100}%`)
-        .attr("stop-color", interpGreyRed(t));
+        .attr("stop-color", d3.color(d3.interpolateLab(d3.rgb("#f3f4f6"), d3.rgb("#982339ff"))(t)));
     });
 
     svg.append("rect")
@@ -222,8 +228,8 @@ export default function LondonHeatmap() {
       .attr("fill", "url(#legend-grad)").attr("stroke", "#e5e7eb");
 
     const axis = d3.axisBottom(
-      d3.scaleLinear().domain([FIXED_MIN, FIXED_MAX]).range([legendX, legendX + legendWidth])
-    ).ticks(5).tickSize(4).tickFormat(fmtRatio);
+      d3.scaleLinear().domain([5, 25]).range([legendX, legendX + legendWidth])
+    ).ticks(isSmall ? 3 : 5).tickSize(4).tickFormat(fmtRatio);
 
     svg.append("g")
       .attr("transform", `translate(0, ${legendY + legendHeight})`)
@@ -238,7 +244,7 @@ export default function LondonHeatmap() {
           .attr("font-size", 12)
           .text("Affordability ratio (lower = more affordable)")
       );
-  }, [geo, year, byYearCode, byYearName]);
+  }, [geo, year, byYearCode, byYearName, WIDTH, HEIGHT, isSmall]);
 
   return (
     <div>
@@ -248,7 +254,7 @@ export default function LondonHeatmap() {
           -webkit-appearance: none;
           width: 100%;
           height: 4px;
-          background: #e5e7eb; /* light grey track */
+          background: #e5e7eb;
           border-radius: 9999px;
           outline: none;
         }
@@ -257,10 +263,10 @@ export default function LondonHeatmap() {
           appearance: none;
           width: 14px; height: 14px;
           border-radius: 9999px;
-          background: #6b7280; /* neutral grey thumb */
-          border: 2px solid #f9fafb; /* subtle ring */
+          background: #6b7280;
+          border: 2px solid #f9fafb;
           cursor: pointer;
-          margin-top: -5px; /* centers on track in WebKit */
+          margin-top: -5px;
         }
         .range-neutral::-moz-range-thumb {
           width: 14px; height: 14px;
@@ -269,18 +275,16 @@ export default function LondonHeatmap() {
           border: 2px solid #f9fafb;
           cursor: pointer;
         }
-        .range-neutral::-ms-thumb {
-          width: 14px; height: 14px;
-          border-radius: 9999px;
-          background: #6b7280;
-          border: 2px solid #f9fafb;
-          cursor: pointer;
-        }
-        .range-neutral::-webkit-slider-runnable-track {
-          height: 4px; border-radius: 9999px; background: #e5e7eb;
-        }
+        .range-neutral::-webkit-slider-runnable-track,
         .range-neutral::-moz-range-track {
           height: 4px; border-radius: 9999px; background: #e5e7eb;
+        }
+
+        @media (max-width:640px){
+          .range-neutral::-webkit-slider-thumb,
+          .range-neutral::-moz-range-thumb{
+            width: 18px; height: 18px;
+          }
         }
       `}</style>
 
@@ -303,7 +307,7 @@ export default function LondonHeatmap() {
         </div>
       )}
 
-      <div style={{ position: "relative" }}>
+      <div ref={wrapRef} style={{ position: "relative" }}>
         <svg ref={svgRef} />
         <div
           ref={tipRef}

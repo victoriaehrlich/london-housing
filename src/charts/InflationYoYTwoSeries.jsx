@@ -1,34 +1,42 @@
 // src/charts/InflationYoYTwoSeries.jsx
 import React from "react";
 import * as d3 from "d3";
+import { useContainerSize } from "../hooks/useContainerSize";
 
 const prefix = import.meta.env.BASE_URL;
-
-const DIMS = { w: 1200, h: 700, m: { t: 48, r: 120, b: 60, l: 80 } };
-const DATA_URL = `${prefix}/pipr_hpi_uk.csv`;
-const INFL_URL = `${prefix}/uk_inflation_rate.csv`;
+// ❗ remove the extra slash — BASE_URL already ends with "/"
+const DATA_URL = `${prefix}pipr_hpi_uk.csv`;
+const INFL_URL = `${prefix}uk_inflation_rate.csv`;
 
 const COLORS = {
-  rent:  "#73605b",   // series: Private rents
-  house: "#9e2f50",   //  series: House prices
-  infl:  "#6b7280",     //  series: Inflation (grey)
-  ann:   "#9ca3af",     //  annotation line (dashed verticals)
-  annText: "#111827",   //  annotation text
+  rent:  "#73605b",   // Private rents
+  house: "#9e2f50",   // House prices
+  infl:  "#6b7280",   // Inflation (grey)
+  ann:   "#9ca3af",   // Annotation line
+  annText: "#111827",
 };
 
 const ANNOTATIONS = [
   { date: "2020-03-23", label: "UK lockdown\nbegins" },
-  //{ date: "2020-07-08", label: "Stamp duty\nholiday starts" },
-  //{ date: "2021-06-30", label: "Stamp duty\ntaper ends" },
   { date: "2021-12-16", label: "BoE first\nrate hike" },
   { date: "2022-09-23", label: "Mini-budget" },
   { date: "2025-03-01", label: "SDLT change" },
 ];
 
-export default function HpiLines() {
+export default function InflationYoYTwoSeries() {
+  const wrapRef = React.useRef(null);
   const ref = React.useRef(null);
   const [rows, setRows] = React.useState([]);
   const [err, setErr] = React.useState("");
+
+  // Responsive size from container
+  const cw = useContainerSize(wrapRef, 840);
+  const isSmall = cw < 520;
+  const DIMS = {
+    w: cw,
+    h: isSmall ? 420 : 700,
+    m: { t: 48, r: isSmall ? 80 : 120, b: isSmall ? 42 : 60, l: isSmall ? 56 : 80 },
+  };
 
   // ---- Load & join datasets ----
   React.useEffect(() => {
@@ -115,20 +123,24 @@ export default function HpiLines() {
       .nice()
       .range([DIMS.h - DIMS.m.b, DIMS.m.t]);
 
+    const bottomTicks = isSmall ? 5 : 7;
+    const leftTicks   = isSmall ? 5 : 7;
+
     // Axes
     svg.append("g")
       .attr("transform", `translate(0,${DIMS.h - DIMS.m.b})`)
-      .call(d3.axisBottom(x).ticks(7))
-      .select(".domain").attr("stroke", "#e5e7eb");     // light axis
+      .call(d3.axisBottom(x).ticks(bottomTicks))
+      .select(".domain").attr("stroke", "#e5e7eb");
 
     svg.append("g")
       .attr("transform", `translate(${DIMS.m.l},0)`)
-      .call(d3.axisLeft(y).ticks(7).tickFormat((d) => `${d}%`))
-      .select(".domain").attr("stroke", "#e5e7eb");     //  light axis
+      .call(d3.axisLeft(y).ticks(leftTicks).tickFormat((d) => `${d}%`))
+      .select(".domain").attr("stroke", "#e5e7eb");
 
-    svg.append("g").attr("stroke", "#f3f4f6")           //  grid (very light)
+    // Grid
+    svg.append("g").attr("stroke", "#f3f4f6")
       .selectAll("line")
-      .data(y.ticks(7))
+      .data(y.ticks(leftTicks))
       .join("line")
       .attr("x1", DIMS.m.l).attr("x2", DIMS.w - DIMS.m.r)
       .attr("y1", (d) => y(d)).attr("y2", (d) => y(d));
@@ -136,7 +148,7 @@ export default function HpiLines() {
     svg.append("line")
       .attr("x1", DIMS.m.l).attr("x2", DIMS.w - DIMS.m.r)
       .attr("y1", y(0)).attr("y2", y(0))
-      .attr("stroke", "#ddd");  
+      .attr("stroke", "#ddd");
 
     // Lines
     const lineRent  = d3.line().x(d => x(d.t)).y(d => y(d.rentYoY)).curve(d3.curveMonotoneX);
@@ -144,35 +156,36 @@ export default function HpiLines() {
     const lineInfl  = d3.line().x(d => x(d.t)).y(d => y(d.inflation)).curve(d3.curveMonotoneX);
 
     svg.append("path").datum(rows)
-      .attr("fill", "none").attr("stroke", COLORS.rent)   
+      .attr("fill", "none").attr("stroke", COLORS.rent)
       .attr("stroke-width", 2.5).attr("d", lineRent);
 
     svg.append("path").datum(rows)
-      .attr("fill", "none").attr("stroke", COLORS.house)  
+      .attr("fill", "none").attr("stroke", COLORS.house)
       .attr("stroke-width", 2.5).attr("d", lineHouse);
 
     svg.append("path").datum(rows)
-      .attr("fill", "none").attr("stroke", COLORS.infl)   
+      .attr("fill", "none").attr("stroke", COLORS.infl)
       .attr("stroke-width", 2)
       .attr("stroke-dasharray", "4 3")
       .attr("d", lineInfl);
 
-    // End labels
+    // End labels (slightly smaller on mobile)
     const last = rows[rows.length - 1];
+    const lblSize = isSmall ? 11 : 12;
     svg.append("text")
       .attr("x", x(last.t) + 6).attr("y", y(last.rentYoY))
-      .attr("alignment-baseline", "middle").attr("font-size", 12).attr("fill", COLORS.rent)
+      .attr("alignment-baseline", "middle").attr("font-size", lblSize).attr("fill", COLORS.rent)
       .text("Private rents");
     svg.append("text")
       .attr("x", x(last.t) + 6).attr("y", y(last.houseYoY))
-      .attr("alignment-baseline", "middle").attr("font-size", 12).attr("fill", COLORS.house)
+      .attr("alignment-baseline", "middle").attr("font-size", lblSize).attr("fill", COLORS.house)
       .text("House prices");
     svg.append("text")
       .attr("x", x(last.t) + 6).attr("y", y(last.inflation))
-      .attr("alignment-baseline", "middle").attr("font-size", 12).attr("fill", COLORS.infl)
+      .attr("alignment-baseline", "middle").attr("font-size", lblSize).attr("fill", COLORS.infl)
       .text("Inflation");
 
-    // Annotations: vertical dashed lines + inflation marker + top label 
+    // Annotations
     const tf = d3.timeFormat("%b %Y");
     const parseISO = d3.timeParse("%Y-%m-%d");
     const bisectLeft = d3.bisector((d) => d.t).left;
@@ -186,24 +199,20 @@ export default function HpiLines() {
       return a.inflation + u * (b.inflation - a.inflation);
     };
 
+    const topBase = DIMS.m.t - 10; // top label baseline
     const annData = ANNOTATIONS.map((a, idx) => {
       const t = parseISO(a.date) || new Date(a.date);
       if (!(t instanceof Date) || isNaN(t) || t < x.domain()[0] || t > x.domain()[1]) return null;
       const v = inflAt(t);
       if (!Number.isFinite(v)) return null;
-
       const px = x(t);
       const py = y(v);
-
-      // top label position (stagger a bit to reduce collisions)
-      const topY = DIMS.m.t -  -10;
-      const labelY = topY - ((idx % -4) * 10);
+      const labelY = topBase - ((idx % 4) * 10); // stagger a bit
       return { ...a, t, px, py, labelY };
     }).filter(Boolean);
 
     const gAnn = svg.append("g").attr("class", "annotations");
 
-    // dashed verticals
     gAnn.selectAll("line.vline")
       .data(annData)
       .join("line")
@@ -215,7 +224,6 @@ export default function HpiLines() {
       .attr("stroke-dasharray", "3,3")
       .attr("opacity", 0.9);
 
-    // marker on inflation line (small circle)
     gAnn.selectAll("circle.marker")
       .data(annData)
       .join("circle")
@@ -226,7 +234,6 @@ export default function HpiLines() {
       .attr("stroke", "white")
       .attr("stroke-width", 1.2);
 
-    // bold labels at top
     gAnn.selectAll("text.toplabel")
       .data(annData)
       .join("text")
@@ -236,51 +243,9 @@ export default function HpiLines() {
       .attr("font-size", 12)
       .attr("font-weight", 700)
       .attr("fill", COLORS.annText)
-      .text(d => d.label); 
+      .text(d => d.label);
 
-    // event hover tip
-    const eventTip = d3.select(ref.current.parentNode)
-      .append("div")
-      .attr("id", "event-tip")
-      .style("position", "absolute")
-      .style("pointerEvents", "none")
-      .style("background", "rgba(17,24,39,0.92)")
-      .style("color", "#fff")
-      .style("padding", "6px 8px")
-      .style("borderRadius", "6px")
-      .style("fontSize", "12px")
-      .style("lineHeight", "1.2")
-      .style("whiteSpace", "nowrap")
-      .style("display", "none")
-      .style("boxShadow", "0 6px 18px rgba(0,0,0,0.25)");
-
-    // unified hover area for each event column
-    gAnn.selectAll("g.ann-hit")
-      .data(annData)
-      .join("g")
-      .attr("class", "ann-hit")
-      .each(function (d) {
-        const g = d3.select(this);
-        const w = 80, h = DIMS.h - DIMS.m.t + 20;
-        g.append("rect")
-          .attr("x", d.px - w / 2)
-          .attr("y", DIMS.m.t - 30)
-          .attr("width", w)
-          .attr("height", h)
-          .attr("fill", "transparent")
-          .style("cursor", "pointer")
-          .on("mouseenter", () => eventTip.style("display", "block"))
-          .on("mouseleave", () => eventTip.style("display", "none"))
-          .on("mousemove", function (event) {
-            const bbox = this.ownerSVGElement.getBoundingClientRect();
-            eventTip
-              .style("left", `${event.clientX - bbox.left}px`)
-              .style("top", `${event.clientY - bbox.top - 12}px`)
-              .html(`<div style="font-weight:700; margin-bottom:2px">${d.label}</div><div>${tf(d.t)}</div>`);
-          });
-      });
-
-    // ---------- FULL-CHART HOVER (overlay) ----------
+    // Hover overlay & tooltip
     const tooltip = d3.select(ref.current.parentNode).select("#hpi-tooltip");
     const guide = svg.append("line")
       .attr("y1", DIMS.m.t).attr("y2", DIMS.h - DIMS.m.b)
@@ -335,11 +300,12 @@ export default function HpiLines() {
         const pageY = event.clientY - bbox.top;
 
         const inflTxt = Number.isFinite(d.inflation) ? `${d.inflation.toFixed(1)}%` : "—";
+        const tf2 = d3.timeFormat("%b %Y");
         tooltip
           .style("left", `${pageX}px`)
           .style("top", `${pageY}px`)
           .html(
-            `<div style="font-weight:600; margin-bottom:4px">${tf(d.t)}</div>
+            `<div style="font-weight:600; margin-bottom:4px">${tf2(d.t)}</div>
              <div><span style="display:inline-block;width:10px;height:10px;background:${COLORS.rent};border-radius:50%;margin-right:6px"></span>
                Private rents: <strong>${d.rentYoY.toFixed(1)}%</strong></div>
              <div><span style="display:inline-block;width:10px;height:10px;background:${COLORS.house};border-radius:50%;margin-right:6px"></span>
@@ -348,7 +314,7 @@ export default function HpiLines() {
                Inflation: <strong>${inflTxt}</strong></div>`
           );
       });
-  }, [rows, err]);
+  }, [rows, err, cw, isSmall]);
 
   return (
     <figure style={{ background: "#f8f1e7", borderRadius: 12, padding: 12 }}>
@@ -356,7 +322,7 @@ export default function HpiLines() {
         UK house price inflation, rent inflation, and CPI inflation (YoY %)
       </figcaption>
 
-      <div style={{ position: "relative" }}>
+      <div ref={wrapRef} style={{ position: "relative" }}>
         <svg ref={ref} />
         <div
           id="hpi-tooltip"
