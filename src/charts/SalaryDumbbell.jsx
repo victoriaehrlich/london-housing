@@ -2,7 +2,9 @@
 import React from "react";
 import * as d3 from "d3";
 
-const CSV_URL = "/ldn_salary_growth.csv"; // rows where Metric = "salary"
+const prefix = import.meta.env.BASE_URL;
+
+const CSV_URL = `${prefix}ldn_salary_growth.csv`; // rows where Metric = "salary"
 const DIMS = { w: 1100, h: 900, m: { t: 40, r: 160, b: 50, l: 260 } };
 
 function parsePounds(v) {
