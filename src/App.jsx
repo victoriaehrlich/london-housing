@@ -6,8 +6,7 @@ import LondonHeatmap from "./maps/LondonHeatmap";
 export default function App() {
   console.log("App.jsx loaded");
 
-  const TEXT_MAX = 880;
-  const CHART_MAX = 840;
+  const TEXT_MAX = 880; // text + chart max width
 
   return (
     <main
@@ -18,9 +17,8 @@ export default function App() {
         padding: "6vh 2vw",
       }}
     >
-      {/* 🧱 Outer content card — mobile styles will pick this up */}
+      {/* Outer content card */}
       <div
-        className="card"
         style={{
           width: "clamp(360px, 90vw, 1200px)",
           margin: "0 auto",
@@ -32,7 +30,6 @@ export default function App() {
       >
         {/* --- Title + Intro --- */}
         <section
-          className="section"
           style={{
             marginBottom: "6vh",
             color: "#1f2937",
@@ -71,7 +68,7 @@ export default function App() {
         </section>
 
         {/* --- Section: Inflation chart --- */}
-        <section className="section" style={{ margin: "6vh 0", color: "#374151" }}>
+        <section style={{ margin: "6vh 0", color: "#374151" }}>
           <div style={{ maxWidth: TEXT_MAX, margin: "0 auto" }}>
             <h2 style={{ fontSize: 32, marginBottom: 12, textAlign: "left" }}>
               Price and rent inflation
@@ -106,15 +103,16 @@ export default function App() {
               imprint on the inflation curve, showing how the housing market mirrors wider
               economic policy in real time.
             </p>
-          </div>
 
-          <div style={{ maxWidth: "100%", margin: "12px auto 0" }}>
-            <InflationYoYTwoSeries />
+            {/* Chart container constrained to TEXT_MAX */}
+            <div style={{ maxWidth: TEXT_MAX, width: "100%", margin: "12px auto 0" }}>
+              <InflationYoYTwoSeries />
+            </div>
           </div>
         </section>
 
         {/* --- Section: Salary Dumbbell --- */}
-        <section className="section" style={{ margin: "6vh 0", color: "#374151" }}>
+        <section style={{ margin: "6vh 0", color: "#374151" }}>
           <div style={{ maxWidth: TEXT_MAX, margin: "0 auto" }}>
             <h2 style={{ fontSize: 28, marginBottom: 12, textAlign: "left" }}>
               Where salaries moved fastest
@@ -141,15 +139,16 @@ export default function App() {
               we reveal the underlying tension between income and cost — a prelude to the
               next chart.
             </p>
-          </div>
 
-          <div style={{ maxWidth: "100%", margin: "12px auto 0" }}>
-            <SalaryDumbbell fromYear={2022} toYear={2024} />
+            {/* Chart container constrained to TEXT_MAX */}
+            <div style={{ maxWidth: TEXT_MAX, width: "100%", margin: "12px auto 0" }}>
+              <SalaryDumbbell fromYear={2022} toYear={2024} />
+            </div>
           </div>
         </section>
 
         {/* --- Section: London intro --- */}
-        <section className="section" style={{ margin: "6vh 0", color: "#374151" }}>
+        <section style={{ margin: "6vh 0", color: "#374151" }}>
           <div style={{ maxWidth: TEXT_MAX, margin: "0 auto" }}>
             <h2 style={{ fontSize: 28, marginBottom: 12, textAlign: "left" }}>
               Zooming in on London
@@ -179,7 +178,7 @@ export default function App() {
         </section>
 
         {/* --- Section: London Heatmap --- */}
-        <div style={{ maxWidth: "100%", margin: "12px auto 0" }}>
+        <div style={{ maxWidth: TEXT_MAX, width: "100%", margin: "12px auto 0" }}>
           <LondonHeatmap />
         </div>
       </div>

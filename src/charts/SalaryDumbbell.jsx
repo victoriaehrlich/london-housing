@@ -20,15 +20,9 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
   const [rows, setRows] = React.useState([]);
   const [err, setErr] = React.useState("");
 
-  // Track container width for responsiveness
+  // Container width for responsiveness
   const cw = useContainerSize(wrapRef, 840);
   const isSmall = cw < 480;
-
-  const DIMS = {
-    w: cw,
-    h: isSmall ? 560 : 900,
-    m: { t: 32, r: isSmall ? 100 : 160, b: 40, l: isSmall ? 120 : 260 },
-  };
 
   // Load + prep
   React.useEffect(() => {
@@ -38,8 +32,8 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
         const salaryRows = raw.filter(
           (r) => String(r.Metric ?? r.metric ?? "").toLowerCase() === "salary"
         );
-        const fy = String(fromYear),
-          ty = String(toYear);
+        const fy = String(fromYear);
+        const ty = String(toYear);
 
         const data = salaryRows
           .map((r) => {
@@ -52,7 +46,7 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
           })
           .filter((d) => d.name && Number.isFinite(d.a) && Number.isFinite(d.b));
 
-        // Sort by salary — highest b at top
+        // Sort by end salary (highest at top)
         data.sort((a, b) => d3.descending(a.b, b.b));
 
         setRows(data);
@@ -70,6 +64,18 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
     const tip = d3.select(tipRef.current);
     svg.selectAll("*").remove();
 
+    // --- Dynamic sizing (prevents “squeezed” chart on phones) ---
+    const n = rows.length || 32;
+    const perRow = isSmall ? 24 : 30;                 // vertical space per borough
+    const base   = isSmall ? 120 : 160;               // top/bottom & axes space
+    const H      = Math.min(1800, Math.max(base + perRow * n, isSmall ? 560 : 900));
+
+    const DIMS = {
+      w: cw,
+      h: H,
+      m: { t: 28, r: isSmall ? 80 : 150, b: 44, l: isSmall ? 110 : 240 },
+    };
+
     svg
       .attr("viewBox", `0 0 ${DIMS.w} ${DIMS.h}`)
       .style("width", "100%")
@@ -77,12 +83,7 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
       .style("display", "block");
 
     if (err) {
-      svg
-        .append("text")
-        .attr("x", 20)
-        .attr("y", 40)
-        .attr("fill", "crimson")
-        .text(err);
+      svg.append("text").attr("x", 20).attr("y", 40).attr("fill", "crimson").text(err);
       return;
     }
     if (!rows.length) {
@@ -91,11 +92,12 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
     }
 
     const names = rows.map((d) => d.name);
+
     const y = d3
       .scaleBand()
       .domain(names)
       .range([DIMS.m.t, DIMS.h - DIMS.m.b])
-      .padding(0.4);
+      .padding(isSmall ? 0.25 : 0.4);
 
     const xs = rows.flatMap((d) => [d.a, d.b]);
     const [minX, maxX] = d3.extent(xs);
@@ -111,32 +113,30 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
     const fmtGBP = d3.format(",.0f");
     const fmtSigned = d3.format("+,.0f");
 
-    // Axes
+    // X axis
+    const xTicks = isSmall ? 4 : 6;
     svg
       .append("g")
       .attr("transform", `translate(0,${DIMS.h - DIMS.m.b})`)
-      .call(
-        d3
-          .axisBottom(x)
-          .ticks(isSmall ? 4 : 6)
-          .tickFormat((d) => `£${fmtGBP(d)}`)
-      )
+      .call(d3.axisBottom(x).ticks(xTicks).tickFormat((d) => `£${fmtGBP(d)}`))
       .select(".domain")
       .attr("stroke", "#e5e7eb");
 
-    svg
-      .append("g")
-      .attr("transform", `translate(${DIMS.m.l},0)`)
-      .call(d3.axisLeft(y))
-      .select(".domain")
-      .attr("stroke", "#e5e7eb");
+    // Y axis — fewer tick labels on small screens
+    const showEvery = isSmall ? 2 : 1; // show every 2nd label on small
+    const yTickValues = names.filter((_, i) => i % showEvery === 0);
+    const yAxis = d3.axisLeft(y).tickValues(yTickValues);
+
+    const gy = svg.append("g").attr("transform", `translate(${DIMS.m.l},0)`).call(yAxis);
+    gy.select(".domain").attr("stroke", "#e5e7eb");
+    gy.selectAll(".tick text").attr("font-size", isSmall ? 10 : 12);
 
     // Grid
     svg
       .append("g")
       .attr("stroke", "#f3f4f6")
       .selectAll("line")
-      .data(x.ticks(isSmall ? 4 : 6))
+      .data(x.ticks(xTicks))
       .join("line")
       .attr("x1", (d) => x(d))
       .attr("x2", (d) => x(d))
@@ -150,15 +150,12 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
       .data(rows)
       .join("g")
       .attr("class", "row")
-      .attr(
-        "transform",
-        (d) => `translate(0, ${y(d.name) + y.bandwidth() / 2})`
-      );
+      .attr("transform", (d) => `translate(0, ${y(d.name) + y.bandwidth() / 2})`);
 
     const baseStroke = "#cbd5e1";
     const hiStroke = "#73605b";
-    const cA = "#94a3b8";
-    const cB = "#9e2f50";
+    const cA = "#94a3b8"; // start
+    const cB = "#9e2f50"; // end
 
     // Connector lines
     gRows
@@ -244,7 +241,7 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
       .attr("x", (d) => x(Math.max(d.a, d.b)) + 8)
       .attr("y", 0)
       .attr("alignment-baseline", "middle")
-      .attr("font-size", 11)
+      .attr("font-size", isSmall ? 10 : 11)
       .attr("fill", "#0f172a")
       .text((d) => `£${fmtSigned(d.diff)}`);
 
@@ -267,13 +264,11 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
     function hideTip() {
       tip.style("display", "none");
     }
-  }, [rows, err, fromYear, toYear, cw]);
+  }, [rows, err, fromYear, toYear, cw, isSmall]);
 
   return (
     <figure style={{ background: "#f8f1e7", borderRadius: 12, padding: 12 }}>
-      <figcaption
-        style={{ textAlign: "center", fontWeight: 600, marginBottom: 8 }}
-      >
+      <figcaption style={{ textAlign: "center", fontWeight: 600, marginBottom: 8 }}>
         Borough salaries: change from {fromYear} to {toYear}
       </figcaption>
 
@@ -299,16 +294,8 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
         />
       </div>
 
-      <p
-        style={{
-          fontSize: 12,
-          color: "#121212ff",
-          textAlign: "center",
-          marginTop: 4,
-        }}
-      >
-        Source: ASHE workplace earnings (gross annual). Hover the line or dots to
-        see levels and change.
+      <p style={{ fontSize: 12, color: "#121212ff", textAlign: "center", marginTop: 4 }}>
+        Source: ASHE workplace earnings (gross annual). Hover the line or dots to see levels and change.
       </p>
     </figure>
   );
