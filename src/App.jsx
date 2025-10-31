@@ -118,7 +118,7 @@ export default function App() {
           </div>
 
           <div style={{ maxWidth: CHART_MAX, margin: "12px auto 0" }}>
-            <InflationYoyTwoSeries />
+            <InflationYoYTwoSeries />
           </div>
         </section>
 
