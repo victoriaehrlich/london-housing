@@ -1,4 +1,4 @@
-// src/charts/HpiLines.jsx
+// src/charts/InflationYoYTwoSeries.jsx
 import React from "react";
 import * as d3 from "d3";
 

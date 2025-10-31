@@ -2,8 +2,10 @@
 import React from "react";
 import * as d3 from "d3";
 
+const prefix = import.meta.env.BASE_URL;  
+
 const DIMS = { w: 1400, h: 700, m: { t: 40, r: 40, b: 60, l: 80 } };
-const DATA_URL = "/hpi_uk_london.csv";
+const DATA_URL = `${prefix}/hpi_uk_london.csv"`
 
 const COLORS = {
   uk_hpi: "#111827",     // black-ish
