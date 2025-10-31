@@ -1,12 +1,17 @@
 // src/charts/InflationYoYTwoSeries.jsx
 import React from "react";
 import * as d3 from "d3";
-import { useContainerSize } from "../hooks/useContainerSize";
 
 const prefix = import.meta.env.BASE_URL;
-// ❗ remove the extra slash — BASE_URL already ends with "/"
 const DATA_URL = `${prefix}pipr_hpi_uk.csv`;
 const INFL_URL = `${prefix}uk_inflation_rate.csv`;
+
+const DIMS = {
+  // Fixed internal canvas that matches your text width nicely
+  w: 880,
+  h: 700,
+  m: { t: 40, r: 56, b: 40, l: 56 },
+};
 
 const COLORS = {
   rent:  "#73605b",   // Private rents
@@ -24,20 +29,9 @@ const ANNOTATIONS = [
 ];
 
 export default function InflationYoYTwoSeries() {
-  const wrapRef = React.useRef(null);
   const ref = React.useRef(null);
   const [rows, setRows] = React.useState([]);
   const [err, setErr] = React.useState("");
-
-  // Responsive size from container
-  const cw = useContainerSize(wrapRef, 840);
-  const isSmall = cw < 520;
-
-  const DIMS = {
-    w: cw,
-    h: isSmall ? 480 : 700,                  // a touch taller on phones
-   m: { t: 40, r: isSmall ? 36 : 100, b: 40, l: isSmall ? 36 : 80 }, // tighter side margins on phones
-  };
 
   // ---- Load & join datasets ----
   React.useEffect(() => {
@@ -101,7 +95,7 @@ export default function InflationYoYTwoSeries() {
     svg
       .attr("viewBox", `0 0 ${DIMS.w} ${DIMS.h}`)
       .style("display", "block")
-      .style("width", "100%")
+      .style("width", "100%")   // scales to container
       .style("height", "auto");
 
     if (err) {
@@ -113,8 +107,21 @@ export default function InflationYoYTwoSeries() {
       return;
     }
 
+    // ---- Scales (extend x-domain to include latest annotation) ----
+    const parseISO = d3.timeParse("%Y-%m-%d");
+    const dataExtent = d3.extent(rows, (d) => d.t);
+
+    const annDates = ANNOTATIONS
+      .map(a => parseISO(a.date) || new Date(a.date))
+      .filter(d => d instanceof Date && !isNaN(+d));
+
+    const domainMin = dataExtent[0];
+    const domainMax = annDates.length
+      ? new Date(Math.max(+dataExtent[1], ...annDates.map(d => +d)))
+      : dataExtent[1];
+
     const x = d3.scaleUtc()
-      .domain(d3.extent(rows, (d) => d.t))
+      .domain([domainMin, domainMax])
       .range([DIMS.m.l, DIMS.w - DIMS.m.r]);
 
     const [minY, maxY] = d3.extent(rows.flatMap((d) => [d.rentYoY, d.houseYoY, d.inflation]));
@@ -124,8 +131,10 @@ export default function InflationYoYTwoSeries() {
       .nice()
       .range([DIMS.h - DIMS.m.b, DIMS.m.t]);
 
-    const bottomTicks = isSmall ? 4 : 7;
-    const leftTicks   = isSmall ? 4 : 7;
+    // Use fewer ticks on very small screens (rough heuristic)
+    const isNarrow = typeof window !== "undefined" && window.innerWidth < 520;
+    const bottomTicks = isNarrow ? 4 : 7;
+    const leftTicks   = isNarrow ? 4 : 7;
 
     // Axes
     svg.append("g")
@@ -170,9 +179,10 @@ export default function InflationYoYTwoSeries() {
       .attr("stroke-dasharray", "4 3")
       .attr("d", lineInfl);
 
-    // End labels (slightly smaller on mobile)
+    // End labels
     const last = rows[rows.length - 1];
-    const lblSize = isSmall ? 11 : 12;
+    const lblSize = isNarrow ? 10.5 : 12;
+
     svg.append("text")
       .attr("x", x(last.t) + 6).attr("y", y(last.rentYoY))
       .attr("alignment-baseline", "middle").attr("font-size", lblSize).attr("fill", COLORS.rent)
@@ -186,9 +196,8 @@ export default function InflationYoYTwoSeries() {
       .attr("alignment-baseline", "middle").attr("font-size", lblSize).attr("fill", COLORS.infl)
       .text("Inflation");
 
-    // Annotations
+    // --- Annotations ---
     const tf = d3.timeFormat("%b %Y");
-    const parseISO = d3.timeParse("%Y-%m-%d");
     const bisectLeft = d3.bisector((d) => d.t).left;
 
     const inflAt = (t) => {
@@ -200,15 +209,15 @@ export default function InflationYoYTwoSeries() {
       return a.inflation + u * (b.inflation - a.inflation);
     };
 
-    const topBase = DIMS.m.t - 10; // top label baseline
+    const topBase = DIMS.m.t - 10;
     const annData = ANNOTATIONS.map((a, idx) => {
       const t = parseISO(a.date) || new Date(a.date);
-      if (!(t instanceof Date) || isNaN(t) || t < x.domain()[0] || t > x.domain()[1]) return null;
+      if (!(t instanceof Date) || isNaN(t)) return null;
       const v = inflAt(t);
       if (!Number.isFinite(v)) return null;
       const px = x(t);
       const py = y(v);
-      const labelY = topBase - ((idx % 4) * 10); // stagger a bit
+      const labelY = topBase - ((idx % 4) * 10);
       return { ...a, t, px, py, labelY };
     }).filter(Boolean);
 
@@ -304,7 +313,7 @@ export default function InflationYoYTwoSeries() {
         const tf2 = d3.timeFormat("%b %Y");
         tooltip
           .style("left", `${pageX}px`)
-          .style("top", `${pageY}px`)
+          .style("top", `${pageY - 14}px`)
           .html(
             `<div style="font-weight:600; margin-bottom:4px">${tf2(d.t)}</div>
              <div><span style="display:inline-block;width:10px;height:10px;background:${COLORS.rent};border-radius:50%;margin-right:6px"></span>
@@ -315,7 +324,7 @@ export default function InflationYoYTwoSeries() {
                Inflation: <strong>${inflTxt}</strong></div>`
           );
       });
-  }, [rows, err, cw, isSmall]);
+  }, [rows, err]);
 
   return (
     <figure style={{ background: "#f8f1e7", borderRadius: 12, padding: 12 }}>
@@ -323,7 +332,8 @@ export default function InflationYoYTwoSeries() {
         UK house price inflation, rent inflation, and CPI inflation (YoY %)
       </figcaption>
 
-      <div ref={wrapRef} style={{ position: "relative", width: "100%" }}>
+      {/* This wrapper will be constrained by your container in App.jsx (e.g., maxWidth: TEXT_MAX) */}
+      <div style={{ position: "relative", width: "100%" }}>
         <svg ref={ref} />
         <div
           id="hpi-tooltip"
