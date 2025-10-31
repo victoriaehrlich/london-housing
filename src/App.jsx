@@ -1,5 +1,5 @@
 // src/App.jsx
-import InflationYoyTwoSeries from "./charts/InflationYoyTwoSeries";
+import InflationYoYTwoSeries from "./charts/InflationYoYTwoSeries";
 import SalaryDumbbell from "./charts/SalaryDumbbell";
 import LondonHeatmap from "./maps/LondonHeatmap";
 
