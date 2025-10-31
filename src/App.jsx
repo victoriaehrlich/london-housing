@@ -105,7 +105,7 @@ export default function App() {
             </p>
 
             {/* Chart container constrained to TEXT_MAX */}
-            <div style={{ maxWidth: TEXT_MAX, width: "100%", margin: "12px auto 0" }}>
+            <div style={{ maxWidth: TEXT_MAX, width: "840px", margin: "12px auto 0" }}>
               <InflationYoYTwoSeries />
             </div>
           </div>
