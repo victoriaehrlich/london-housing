@@ -75,7 +75,7 @@ export default function App() {
             </h2>
 
             <p style={{ lineHeight: 1.6, textAlign: "left", margin: 0 }}>
-              The story of housing in Britain has always been one of imbalance — between
+              The story of housing in Britain has always been one of imbalance - between
               supply and demand, between those who own and those who rent. Over the past
               decade, that divide has deepened. The next chart tracks annual inflation in
               house prices and private rents. It shows how housing costs have moved through
@@ -88,7 +88,7 @@ export default function App() {
               limited housing stock. When the market overheated, the Bank of England stepped
               in, raising rates to curb activity. Yet as higher borrowing costs cooled house
               prices, demand spilled into the rental market, driving up rent inflation with
-              a lag. By 2023, rent growth had overtaken house-price inflation — a sign of
+              a lag. By 2023, rent growth had overtaken house-price inflation - a sign of
               pressure shifting from buyers to renters. ONS data indicates a cooling in the
               rental market, but with pressures on renters as a whole likely to continue.
               Average UK monthly private rents increased by 7 per cent to £1,339 in the 12 months
@@ -122,7 +122,7 @@ export default function App() {
               Understanding the cost side of housing is only half the story. Equally
               important is how earnings have changed. This chart compares median workplace
               salaries across London’s boroughs between 2022 and 2024. Over that period, the
-              average borough saw a 13 per cent rise in pay — roughly in line with cumulative
+              average borough saw a 13 per cent rise in pay - roughly in line with cumulative
               inflation at its peak, but one that masks striking local disparities.
               <br />
               <br />
@@ -136,7 +136,7 @@ export default function App() {
               The connection between income and housing is critical. When house-price
               inflation slows but rents climb, stagnant wages can push more households into
               financial strain. By visualising salary growth before mapping affordability,
-              we reveal the underlying tension between income and cost — a prelude to the
+              we reveal the underlying tension between income and cost - a prelude to the
               next chart.
             </p>
 
@@ -158,7 +158,7 @@ export default function App() {
               At the national level, housing trends can seem abstract. But at the city
               scale, the consequences are tangible. London’s boroughs offer a detailed
               snapshot of where affordability pressure is most acute. The heatmap below
-              compares each borough’s affordability ratio — the relationship between median
+              compares each borough’s affordability ratio - the relationship between median
               house price and local earnings.
               <br />
               <br />

@@ -64,16 +64,33 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
     const tip = d3.select(tipRef.current);
     svg.selectAll("*").remove();
 
-    // --- Dynamic sizing (prevents “squeezed” chart on phones) ---
+    // ------ Compact sizing logic ------
     const n = rows.length || 32;
-    const perRow = isSmall ? 24 : 30;                 // vertical space per borough
-    const base   = isSmall ? 120 : 160;               // top/bottom & axes space
-    const H      = Math.min(1800, Math.max(base + perRow * n, isSmall ? 560 : 900));
+
+    // Aim for a compact height; adapt row height to fit
+    const targetH = isSmall ? 520 : 640;      // desired overall height
+    const base    = isSmall ? 110 : 150;      // axes + padding block
+    const minPer  = 16;                        // min px per row
+    const maxPer  = isSmall ? 24 : 28;         // max px per row
+
+    // compute per-row so the chart stays near targetH (within min/max bounds)
+    const perRow = Math.max(
+      minPer,
+      Math.min(maxPer, Math.floor((targetH - base) / Math.max(1, n)))
+    );
+
+    // final height: will be close to target, compact even with many rows
+    const H = base + perRow * n;
 
     const DIMS = {
       w: cw,
       h: H,
-      m: { t: 28, r: isSmall ? 80 : 150, b: 44, l: isSmall ? 110 : 240 },
+      m: {
+        t: 24,
+        r: isSmall ? 64 : 120,   // a touch slimmer on the right
+        b: 40,
+        l: isSmall ? 100 : 180,  // slimmer left margin but still readable
+      },
     };
 
     svg
@@ -97,7 +114,7 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
       .scaleBand()
       .domain(names)
       .range([DIMS.m.t, DIMS.h - DIMS.m.b])
-      .padding(isSmall ? 0.25 : 0.4);
+      .padding(isSmall ? 0.22 : 0.3);
 
     const xs = rows.flatMap((d) => [d.a, d.b]);
     const [minX, maxX] = d3.extent(xs);
@@ -122,14 +139,14 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
       .select(".domain")
       .attr("stroke", "#e5e7eb");
 
-    // Y axis — fewer tick labels on small screens
-    const showEvery = isSmall ? 2 : 1; // show every 2nd label on small
-    const yTickValues = names.filter((_, i) => i % showEvery === 0);
+    // Y axis — thin out labels if there are many rows
+    const sparse = n > (isSmall ? 20 : 28) ? (isSmall ? 3 : 2) : 1;
+    const yTickValues = names.filter((_, i) => i % sparse === 0);
     const yAxis = d3.axisLeft(y).tickValues(yTickValues);
 
     const gy = svg.append("g").attr("transform", `translate(${DIMS.m.l},0)`).call(yAxis);
     gy.select(".domain").attr("stroke", "#e5e7eb");
-    gy.selectAll(".tick text").attr("font-size", isSmall ? 10 : 12);
+    gy.selectAll(".tick text").attr("font-size", isSmall ? 10 : 11);
 
     // Grid
     svg
