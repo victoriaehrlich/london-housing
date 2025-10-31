@@ -1,0 +1,9 @@
+/* RESET + full-viewport canvas */
+html, body, #root {
+  height: 100%;
+  margin: 0;
+}
+* { box-sizing: border-box; }
+
+/* light background so centering is obvious */
+body { background: #f3f4f6; }
