@@ -68,7 +68,7 @@ export default function RentSmallMultiples({ showTooltip = true }) {
         if (!clean.length) throw new Error("No valid rows (check CSV).");
 
         const keys = Object.keys(clean[0]).filter((k) => k !== "t");
-        const ukKey = "uk"; // expected after normalization
+        const ukKey = "uk"; 
         const regions = keys.filter((k) => k !== ukKey);
 
         setRows(clean);
@@ -80,7 +80,6 @@ export default function RentSmallMultiples({ showTooltip = true }) {
   if (err) return <div style={{ color: "crimson" }}>Error: {err}</div>;
   if (!rows.length || !regionKeys.length) return <div>Loading…</div>;
 
-  // Shared scales across ALL panels so values are comparable visually
   const x = d3
     .scaleUtc()
     .domain(d3.extent(rows, (d) => d.t))
@@ -129,7 +128,7 @@ export default function RentSmallMultiples({ showTooltip = true }) {
   );
 }
 
-// ---------- One SVG per region ----------
+// One per region 
 function SmallChart({ rows, x, y, focalKey, allKeys, showTooltip }) {
   const svgRef = React.useRef(null);
   const tipRef = React.useRef(null);
@@ -183,7 +182,6 @@ function SmallChart({ rows, x, y, focalKey, allKeys, showTooltip }) {
       .x((d) => x(d.t))
       .y((d) => y(d.v));
 
-    // Build series values once per panel
     const valuesByKey = new Map(
       allKeys.map((k) => [k, rows.map((r) => ({ t: r.t, v: r[k] }))])
     );
@@ -240,9 +238,9 @@ function SmallChart({ rows, x, y, focalKey, allKeys, showTooltip }) {
         .text(label);
     }
 
-    if (!showTooltip) return; // stop here if tooltips are disabled
+    if (!showTooltip) return;
 
-    // --- Hover tooltip (date, focal & UK values) ---
+    // Hover tooltip (date, focal & UK values) 
     const bisect = d3.bisector((d) => d.t).center;
     const guide = svg
       .append("line")

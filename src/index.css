@@ -7,3 +7,42 @@ html, body, #root {
 
 /* light background so centering is obvious */
 body { background: #f3f4f6; }
+
+/* MOBILE FRIENDLY TWEAKS   */
+
+@media (max-width: 640px) {
+  /* make text & layout more compact */
+  h1 {
+    font-size: 28px !important;
+    line-height: 1.15;
+  }
+  h2 {
+    font-size: 22px !important;
+  }
+  h3 {
+    font-size: 16px !important;
+    line-height: 1.4;
+  }
+  p {
+    font-size: 14px;
+    line-height: 1.55;
+  }
+
+  /* main content wrapper padding */
+  main {
+    padding: 4vh 3vw !important;
+  }
+
+  /* the inner card container */
+  .card {
+    padding: 14px !important;
+    border-radius: 8px !important;
+  }
+
+  /* slider thumb slightly larger for touch */
+  .range-neutral::-webkit-slider-thumb,
+  .range-neutral::-moz-range-thumb {
+    width: 18px;
+    height: 18px;
+  }
+}

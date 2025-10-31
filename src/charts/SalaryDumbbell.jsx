@@ -1,11 +1,10 @@
 // src/charts/SalaryDumbbell.jsx
 import React from "react";
 import * as d3 from "d3";
+import { useContainerSize } from "../hooks/useContainerSize";
 
 const prefix = import.meta.env.BASE_URL;
-
 const CSV_URL = `${prefix}ldn_salary_growth.csv`; // rows where Metric = "salary"
-const DIMS = { w: 1100, h: 900, m: { t: 40, r: 160, b: 50, l: 260 } };
 
 function parsePounds(v) {
   if (v == null) return NaN;
@@ -15,10 +14,21 @@ function parsePounds(v) {
 }
 
 export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
+  const wrapRef = React.useRef(null);
   const svgRef = React.useRef(null);
   const tipRef = React.useRef(null);
   const [rows, setRows] = React.useState([]);
   const [err, setErr] = React.useState("");
+
+  // Track container width for responsiveness
+  const cw = useContainerSize(wrapRef, 840);
+  const isSmall = cw < 480;
+
+  const DIMS = {
+    w: cw,
+    h: isSmall ? 560 : 900,
+    m: { t: 32, r: isSmall ? 100 : 160, b: 40, l: isSmall ? 120 : 260 },
+  };
 
   // Load + prep
   React.useEffect(() => {
@@ -28,7 +38,8 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
         const salaryRows = raw.filter(
           (r) => String(r.Metric ?? r.metric ?? "").toLowerCase() === "salary"
         );
-        const fy = String(fromYear), ty = String(toYear);
+        const fy = String(fromYear),
+          ty = String(toYear);
 
         const data = salaryRows
           .map((r) => {
@@ -66,7 +77,12 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
       .style("display", "block");
 
     if (err) {
-      svg.append("text").attr("x", 20).attr("y", 40).attr("fill", "crimson").text(err);
+      svg
+        .append("text")
+        .attr("x", 20)
+        .attr("y", 40)
+        .attr("fill", "crimson")
+        .text(err);
       return;
     }
     if (!rows.length) {
@@ -75,14 +91,16 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
     }
 
     const names = rows.map((d) => d.name);
-    const y = d3.scaleBand()
+    const y = d3
+      .scaleBand()
       .domain(names)
       .range([DIMS.m.t, DIMS.h - DIMS.m.b])
       .padding(0.4);
 
     const xs = rows.flatMap((d) => [d.a, d.b]);
     const [minX, maxX] = d3.extent(xs);
-    const x = d3.scaleLinear()
+    const x = d3
+      .scaleLinear()
       .domain([
         Math.floor((minX ?? 0) * 0.95),
         Math.ceil((maxX ?? 1) * 1.05),
@@ -94,23 +112,31 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
     const fmtSigned = d3.format("+,.0f");
 
     // Axes
-    svg.append("g")
+    svg
+      .append("g")
       .attr("transform", `translate(0,${DIMS.h - DIMS.m.b})`)
-      .call(d3.axisBottom(x).ticks(6).tickFormat((d) => `£${fmtGBP(d)}`))
+      .call(
+        d3
+          .axisBottom(x)
+          .ticks(isSmall ? 4 : 6)
+          .tickFormat((d) => `£${fmtGBP(d)}`)
+      )
       .select(".domain")
       .attr("stroke", "#e5e7eb");
 
-    svg.append("g")
+    svg
+      .append("g")
       .attr("transform", `translate(${DIMS.m.l},0)`)
       .call(d3.axisLeft(y))
       .select(".domain")
       .attr("stroke", "#e5e7eb");
 
     // Grid
-    svg.append("g")
+    svg
+      .append("g")
       .attr("stroke", "#f3f4f6")
       .selectAll("line")
-      .data(x.ticks(6))
+      .data(x.ticks(isSmall ? 4 : 6))
       .join("line")
       .attr("x1", (d) => x(d))
       .attr("x2", (d) => x(d))
@@ -118,20 +144,25 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
       .attr("y2", DIMS.h - DIMS.m.b);
 
     // Row groups
-    const gRows = svg.append("g")
+    const gRows = svg
+      .append("g")
       .selectAll("g.row")
       .data(rows)
       .join("g")
       .attr("class", "row")
-      .attr("transform", (d) => `translate(0, ${y(d.name) + y.bandwidth() / 2})`);
+      .attr(
+        "transform",
+        (d) => `translate(0, ${y(d.name) + y.bandwidth() / 2})`
+      );
 
     const baseStroke = "#cbd5e1";
     const hiStroke = "#73605b";
-    const cA = "#94a3b8"; 
-    const cB = "#9e2f50"; 
+    const cA = "#94a3b8";
+    const cB = "#9e2f50";
 
-    // Visible connector
-    gRows.append("line")
+    // Connector lines
+    gRows
+      .append("line")
       .attr("class", "connector")
       .attr("x1", (d) => x(d.a))
       .attr("x2", (d) => x(d.b))
@@ -140,15 +171,16 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
       .attr("stroke", baseStroke)
       .attr("stroke-width", 2);
 
-    // Wide hitline for hover (over the connector only)
-    gRows.append("line")
+    // Wide invisible hover area
+    gRows
+      .append("line")
       .attr("class", "hitline")
       .attr("x1", (d) => x(d.a))
       .attr("x2", (d) => x(d.b))
       .attr("y1", 0)
       .attr("y2", 0)
       .attr("stroke", "transparent")
-      .attr("stroke-width", 22) 
+      .attr("stroke-width", 22)
       .attr("pointer-events", "stroke")
       .on("mouseenter", function (event, d) {
         const g = d3.select(this.parentNode);
@@ -156,7 +188,7 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
         g.selectAll(".dotA,.dotB").attr("r", 6.5);
         showTip(event, d);
       })
-      .on("mousemove", function (event, d) { showTip(event, d); })
+      .on("mousemove", (event, d) => showTip(event, d))
       .on("mouseleave", function () {
         const g = d3.select(this.parentNode);
         g.select(".connector").attr("stroke", baseStroke).attr("stroke-width", 2);
@@ -165,48 +197,49 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
       });
 
     // Dots
-    gRows.append("circle")
+    const dotEvents = {
+      mouseenter(event, d) {
+        const g = d3.select(this.parentNode);
+        g.select(".connector").attr("stroke", hiStroke).attr("stroke-width", 3);
+        g.selectAll(".dotA,.dotB").attr("r", 6.5);
+        showTip(event, d);
+      },
+      mousemove(event, d) {
+        showTip(event, d);
+      },
+      mouseleave() {
+        const g = d3.select(this.parentNode);
+        g.select(".connector").attr("stroke", baseStroke).attr("stroke-width", 2);
+        g.selectAll(".dotA,.dotB").attr("r", 5);
+        hideTip();
+      },
+    };
+
+    gRows
+      .append("circle")
       .attr("class", "dotA")
       .attr("cx", (d) => x(d.a))
       .attr("cy", 0)
       .attr("r", 5)
       .attr("fill", cA)
-      .on("mouseenter", function (event, d) {
-        const g = d3.select(this.parentNode);
-        g.select(".connector").attr("stroke", hiStroke).attr("stroke-width", 3);
-        g.selectAll(".dotA,.dotB").attr("r", 6.5);
-        showTip(event, d);
-      })
-      .on("mousemove", function (event, d) { showTip(event, d); })
-      .on("mouseleave", function () {
-        const g = d3.select(this.parentNode);
-        g.select(".connector").attr("stroke", baseStroke).attr("stroke-width", 2);
-        g.selectAll(".dotA,.dotB").attr("r", 5);
-        hideTip();
-      });
+      .on("mouseenter", dotEvents.mouseenter)
+      .on("mousemove", dotEvents.mousemove)
+      .on("mouseleave", dotEvents.mouseleave);
 
-    gRows.append("circle")
+    gRows
+      .append("circle")
       .attr("class", "dotB")
       .attr("cx", (d) => x(d.b))
       .attr("cy", 0)
       .attr("r", 5)
       .attr("fill", cB)
-      .on("mouseenter", function (event, d) {
-        const g = d3.select(this.parentNode);
-        g.select(".connector").attr("stroke", hiStroke).attr("stroke-width", 3);
-        g.selectAll(".dotA,.dotB").attr("r", 6.5);
-        showTip(event, d);
-      })
-      .on("mousemove", function (event, d) { showTip(event, d); })
-      .on("mouseleave", function () {
-        const g = d3.select(this.parentNode);
-        g.select(".connector").attr("stroke", baseStroke).attr("stroke-width", 2);
-        g.selectAll(".dotA,.dotB").attr("r", 5);
-        hideTip();
-      });
+      .on("mouseenter", dotEvents.mouseenter)
+      .on("mousemove", dotEvents.mousemove)
+      .on("mouseleave", dotEvents.mouseleave);
 
-    // On-chart change labels
-    gRows.append("text")
+    // Change labels
+    gRows
+      .append("text")
       .attr("class", "delta")
       .attr("x", (d) => x(Math.max(d.a, d.b)) + 8)
       .attr("y", 0)
@@ -215,7 +248,7 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
       .attr("fill", "#0f172a")
       .text((d) => `£${fmtSigned(d.diff)}`);
 
-    // Tooltip helpers
+    // Tooltip
     function showTip(event, d) {
       const bbox = svgRef.current.getBoundingClientRect();
       const pageX = event.clientX - bbox.left;
@@ -234,16 +267,18 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
     function hideTip() {
       tip.style("display", "none");
     }
-  }, [rows, err, fromYear, toYear]);
+  }, [rows, err, fromYear, toYear, cw]);
 
   return (
     <figure style={{ background: "#f8f1e7", borderRadius: 12, padding: 12 }}>
-      <figcaption style={{ textAlign: "center", fontWeight: 600, marginBottom: 8 }}>
+      <figcaption
+        style={{ textAlign: "center", fontWeight: 600, marginBottom: 8 }}
+      >
         Borough salaries: change from {fromYear} to {toYear}
       </figcaption>
 
-      {/* Keep tooltip DOM in React to avoid removal issues */}
-      <div style={{ position: "relative" }}>
+      {/* Wrapper tracks width for resizing */}
+      <div ref={wrapRef} style={{ position: "relative", width: "100%" }}>
         <svg ref={svgRef} />
         <div
           ref={tipRef}
@@ -264,8 +299,16 @@ export default function SalaryDumbbell({ fromYear = 2022, toYear = 2024 }) {
         />
       </div>
 
-      <p style={{ fontSize: 12, color: "#121212ff", textAlign: "center" }}>
-        Source: ASHE workplace earnings (gross annual). Hover the line or dots to see levels and change.
+      <p
+        style={{
+          fontSize: 12,
+          color: "#121212ff",
+          textAlign: "center",
+          marginTop: 4,
+        }}
+      >
+        Source: ASHE workplace earnings (gross annual). Hover the line or dots to
+        see levels and change.
       </p>
     </figure>
   );

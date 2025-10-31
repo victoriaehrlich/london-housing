@@ -32,10 +32,11 @@ export default function InflationYoYTwoSeries() {
   // Responsive size from container
   const cw = useContainerSize(wrapRef, 840);
   const isSmall = cw < 520;
+
   const DIMS = {
     w: cw,
-    h: isSmall ? 420 : 700,
-    m: { t: 48, r: isSmall ? 80 : 120, b: isSmall ? 42 : 60, l: isSmall ? 56 : 80 },
+    h: isSmall ? 480 : 700,                  // a touch taller on phones
+   m: { t: 40, r: isSmall ? 36 : 100, b: 40, l: isSmall ? 36 : 80 }, // tighter side margins on phones
   };
 
   // ---- Load & join datasets ----
@@ -123,8 +124,8 @@ export default function InflationYoYTwoSeries() {
       .nice()
       .range([DIMS.h - DIMS.m.b, DIMS.m.t]);
 
-    const bottomTicks = isSmall ? 5 : 7;
-    const leftTicks   = isSmall ? 5 : 7;
+    const bottomTicks = isSmall ? 4 : 7;
+    const leftTicks   = isSmall ? 4 : 7;
 
     // Axes
     svg.append("g")
@@ -322,7 +323,7 @@ export default function InflationYoYTwoSeries() {
         UK house price inflation, rent inflation, and CPI inflation (YoY %)
       </figcaption>
 
-      <div ref={wrapRef} style={{ position: "relative" }}>
+      <div ref={wrapRef} style={{ position: "relative", width: "100%" }}>
         <svg ref={ref} />
         <div
           id="hpi-tooltip"

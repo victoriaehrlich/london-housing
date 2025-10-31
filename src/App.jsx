@@ -18,9 +18,11 @@ export default function App() {
         padding: "6vh 2vw",
       }}
     >
+      {/* 🧱 Outer content card — mobile styles will pick this up */}
       <div
+        className="card"
         style={{
-          width: "clamp(360px, 90vw, 1100px)",
+          width: "clamp(360px, 90vw, 1200px)",
           margin: "0 auto",
           background: "#f8f1e7",
           borderRadius: 10,
@@ -28,8 +30,9 @@ export default function App() {
           padding: "24px 24px",
         }}
       >
-        {/*  Title + Intro  */}
+        {/* --- Title + Intro --- */}
         <section
+          className="section"
           style={{
             marginBottom: "6vh",
             color: "#1f2937",
@@ -67,32 +70,20 @@ export default function App() {
           </div>
         </section>
 
-        {/*  Section: Inflation chart  */}
-        <section style={{ margin: "6vh 0", color: "#374151" }}>
+        {/* --- Section: Inflation chart --- */}
+        <section className="section" style={{ margin: "6vh 0", color: "#374151" }}>
           <div style={{ maxWidth: TEXT_MAX, margin: "0 auto" }}>
-            <h2
-              style={{
-                fontSize: 32,
-                marginBottom: 12,
-                textAlign: "left",
-              }}
-            >
+            <h2 style={{ fontSize: 32, marginBottom: 12, textAlign: "left" }}>
               Price and rent inflation
             </h2>
 
-            <p
-              style={{
-                lineHeight: 1.6,
-                textAlign: "left",
-                margin: 0,
-              }}
-            >
-              The story of housing in Britain has always been one of imbalance - between
+            <p style={{ lineHeight: 1.6, textAlign: "left", margin: 0 }}>
+              The story of housing in Britain has always been one of imbalance — between
               supply and demand, between those who own and those who rent. Over the past
               decade, that divide has deepened. The next chart tracks annual inflation in
               house prices and private rents. It shows how housing costs have moved through
               cycles of acceleration and restraint as policymakers attempted to manage
-              affordability through interest rate shifts.
+              affordability through interest-rate shifts.
               <br />
               <br />
               House-price inflation led the cycle. In the years following the pandemic,
@@ -100,11 +91,11 @@ export default function App() {
               limited housing stock. When the market overheated, the Bank of England stepped
               in, raising rates to curb activity. Yet as higher borrowing costs cooled house
               prices, demand spilled into the rental market, driving up rent inflation with
-              a lag. By 2023, rent growth had overtaken house-price inflation - a sign of
-              pressure shifting from buyers to renters. ONS data indicates a cooling in the rental 
-              market, but with pressures on renters as a whole likely to continue. Average UK 
-              monthly private rents increased by 7 per cent to £1,339 in the 12 months to May, 
-              the fifth month of slowing annual rate and the lowest since April 2023.
+              a lag. By 2023, rent growth had overtaken house-price inflation — a sign of
+              pressure shifting from buyers to renters. ONS data indicates a cooling in the
+              rental market, but with pressures on renters as a whole likely to continue.
+              Average UK monthly private rents increased by 7 per cent to £1,339 in the 12 months
+              to May, the fifth month of slowing annual rate and the lowest since April 2023.
               <br />
               <br />
               Key moments punctuate this pattern. The March 2020 lockdown reshaped living
@@ -117,37 +108,24 @@ export default function App() {
             </p>
           </div>
 
-          <div style={{ maxWidth: CHART_MAX, margin: "12px auto 0" }}>
+          <div style={{ maxWidth: "100%", margin: "12px auto 0" }}>
             <InflationYoYTwoSeries />
           </div>
         </section>
 
-        {/*  Section: Salary Dumbbell  */}
-        <section style={{ margin: "6vh 0", color: "#374151" }}>
+        {/* --- Section: Salary Dumbbell --- */}
+        <section className="section" style={{ margin: "6vh 0", color: "#374151" }}>
           <div style={{ maxWidth: TEXT_MAX, margin: "0 auto" }}>
-            <h2
-              style={{
-                fontSize: 28,
-                marginBottom: 12,
-                textAlign: "left",
-              }}
-            >
+            <h2 style={{ fontSize: 28, marginBottom: 12, textAlign: "left" }}>
               Where salaries moved fastest
             </h2>
 
-            <p
-              style={{
-                lineHeight: 1.6,
-                textAlign: "left",
-                margin: 0,
-              }}
-            >
+            <p style={{ lineHeight: 1.6, textAlign: "left", margin: 0 }}>
               Understanding the cost side of housing is only half the story. Equally
               important is how earnings have changed. This chart compares median workplace
               salaries across London’s boroughs between 2022 and 2024. Over that period, the
-              average borough saw a 13 per cent rise in pay - an increase roughly in line with
-              cumulative inflation at its peak, but one that masks striking local
-              disparities.
+              average borough saw a 13 per cent rise in pay — roughly in line with cumulative
+              inflation at its peak, but one that masks striking local disparities.
               <br />
               <br />
               In some areas, wage growth outpaced inflation, offering a modest cushion
@@ -160,40 +138,28 @@ export default function App() {
               The connection between income and housing is critical. When house-price
               inflation slows but rents climb, stagnant wages can push more households into
               financial strain. By visualising salary growth before mapping affordability,
-              we reveal the underlying tension between income and cost - a prelude to the next
-              chart.
+              we reveal the underlying tension between income and cost — a prelude to the
+              next chart.
             </p>
           </div>
 
-          <div style={{ maxWidth: CHART_MAX, margin: "12px auto 0" }}>
+          <div style={{ maxWidth: "100%", margin: "12px auto 0" }}>
             <SalaryDumbbell fromYear={2022} toYear={2024} />
           </div>
         </section>
 
-        {/*  Section: London intro  */}
-        <section style={{ margin: "6vh 0", color: "#374151" }}>
+        {/* --- Section: London intro --- */}
+        <section className="section" style={{ margin: "6vh 0", color: "#374151" }}>
           <div style={{ maxWidth: TEXT_MAX, margin: "0 auto" }}>
-            <h2
-              style={{
-                fontSize: 28,
-                marginBottom: 12,
-                textAlign: "left",
-              }}
-            >
+            <h2 style={{ fontSize: 28, marginBottom: 12, textAlign: "left" }}>
               Zooming in on London
             </h2>
 
-            <p
-              style={{
-                lineHeight: 1.6,
-                textAlign: "left",
-                margin: 0,
-              }}
-            >
+            <p style={{ lineHeight: 1.6, textAlign: "left", margin: 0 }}>
               At the national level, housing trends can seem abstract. But at the city
               scale, the consequences are tangible. London’s boroughs offer a detailed
               snapshot of where affordability pressure is most acute. The heatmap below
-              compares each borough’s affordability ratio - the relationship between median
+              compares each borough’s affordability ratio — the relationship between median
               house price and local earnings.
               <br />
               <br />
@@ -212,8 +178,8 @@ export default function App() {
           </div>
         </section>
 
-        {/*  Section: London Heatmap  */}
-        <div style={{ maxWidth: CHART_MAX, margin: "12px auto 0" }}>
+        {/* --- Section: London Heatmap --- */}
+        <div style={{ maxWidth: "100%", margin: "12px auto 0" }}>
           <LondonHeatmap />
         </div>
       </div>
